@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard | QR Attendance System</title>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container topbar-inner">
+        <a class="brand" href="index.html">QR Attendance System</a>
+        <nav class="nav" aria-label="Main navigation">
+          <a class="nav-link" href="index.html">Home</a>
+          <a class="nav-link" href="scanner.html">Scanner</a>
+          <a class="nav-link active" href="dashboard.html">Dashboard</a>
+          <a class="nav-link" href="reports.html">Reports</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="page">
+      <div class="container grid" style="gap: 1rem;">
+        <section class="grid grid-3">
+          <article class="card"><h3>Total Records</h3><p id="stat-total" class="status-line">0</p></article>
+          <article class="card"><h3>Completed</h3><p id="stat-completed" class="status-line">0</p></article>
+          <article class="card"><h3>Incomplete / On Break</h3><p id="stat-incomplete" class="status-line">0</p></article>
+          <article class="card"><h3>Late</h3><p id="stat-late" class="status-line">0</p></article>
+        </section>
+
+        <section class="card">
+          <div class="actions no-print" style="justify-content: space-between;">
+            <label style="flex:1; min-width:220px;">
+              <span class="muted">Search Employee ID or Name</span>
+              <input class="input" id="search-input" placeholder="e.g. EMP001 or Jane" />
+            </label>
+            <button class="btn secondary" id="refresh-btn" type="button">Refresh Now</button>
+          </div>
+          <p id="dashboard-status" class="status-line muted" aria-live="polite">Loading dashboard...</p>
+          <p class="footer-note">Last refreshed: <span id="last-refresh">—</span></p>
+
+          <div class="table-wrap" style="margin-top:0.8rem;">
+            <table class="table" id="dashboard-table">
+              <thead>
+                <tr>
+                  <th>Employee ID</th>
+                  <th>Full Name</th>
+                  <th>Date</th>
+                  <th>Time In</th>
+                  <th>Break Out</th>
+                  <th>Break In</th>
+                  <th>Time Out</th>
+                  <th>Total Hours</th>
+                  <th>Status</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+              <tbody id="dashboard-tbody"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script src="js/config.js" defer></script>
+    <script src="js/api.js" defer></script>
+    <script src="js/dashboard.js" defer></script>
+  </body>
+</html>
