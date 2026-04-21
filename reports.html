@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reports | QR Attendance System</title>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container topbar-inner">
+        <a class="brand" href="index.html">QR Attendance System</a>
+        <nav class="nav" aria-label="Main navigation">
+          <a class="nav-link" href="index.html">Home</a>
+          <a class="nav-link" href="scanner.html">Scanner</a>
+          <a class="nav-link" href="dashboard.html">Dashboard</a>
+          <a class="nav-link active" href="reports.html">Reports</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="page">
+      <div class="container grid" style="gap: 1rem;">
+        <section class="card no-print">
+          <h1>Employee Reports</h1>
+          <div class="actions">
+            <label style="flex:1; min-width:220px;">
+              <span class="muted">Employee ID</span>
+              <input class="input" id="employee-id-input" placeholder="EMP001" />
+            </label>
+            <button class="btn" id="load-summary-btn" type="button">Load Summary</button>
+            <button class="btn secondary" id="csv-btn" type="button">Export CSV</button>
+            <button class="btn secondary" id="print-btn" type="button">Print</button>
+          </div>
+          <p id="reports-status" class="status-line muted" aria-live="polite">Enter an employee ID to begin.</p>
+        </section>
+
+        <section class="grid grid-3" id="summary-cards">
+          <article class="card"><h3>Present Days</h3><p id="sum-present" class="status-line">—</p></article>
+          <article class="card"><h3>Completed Days</h3><p id="sum-completed" class="status-line">—</p></article>
+          <article class="card"><h3>Late Days</h3><p id="sum-late" class="status-line">—</p></article>
+          <article class="card"><h3>Total Worked Hours</h3><p id="sum-hours" class="status-line">—</p></article>
+        </section>
+
+        <section class="card">
+          <h2>Attendance History</h2>
+          <div class="table-wrap">
+            <table class="table" id="reports-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Time In</th>
+                  <th>Break Out</th>
+                  <th>Break In</th>
+                  <th>Time Out</th>
+                  <th>Total Hours</th>
+                  <th>Status</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+              <tbody id="reports-tbody"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script src="js/config.js" defer></script>
+    <script src="js/api.js" defer></script>
+    <script src="js/reports.js" defer></script>
+  </body>
+</html>

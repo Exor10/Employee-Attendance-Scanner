@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Employee QR Management | QR Attendance System</title>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container topbar-inner">
+        <a class="brand" href="index.html">QR Attendance System</a>
+        <nav class="nav" aria-label="Main navigation">
+          <a class="nav-link" href="index.html">Home</a>
+          <a class="nav-link" href="scanner.html">Scanner</a>
+          <a class="nav-link" href="dashboard.html">Dashboard</a>
+          <a class="nav-link" href="reports.html">Reports</a>
+          <a class="nav-link active" href="employee-admin.html">Employees</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="page">
+      <div class="container grid" style="gap: 1rem;">
+        <section class="hero">
+          <h1>Employee QR Management</h1>
+          <p class="muted">Manage employees, generate tokens and QR URLs, and print employee QR cards.</p>
+        </section>
+
+        <section class="card">
+          <div class="actions">
+            <button id="refresh-employees-btn" class="btn secondary" type="button">Refresh Employees</button>
+            <button id="generate-tokens-btn" class="btn secondary" type="button">Generate Missing Tokens</button>
+            <button id="generate-qr-urls-btn" class="btn secondary" type="button">Generate QR URLs</button>
+          </div>
+          <p id="employee-admin-status" class="status-line muted" aria-live="polite">Loading employees...</p>
+        </section>
+
+        <section class="card">
+          <h2>Add Employee</h2>
+          <div class="grid grid-2" style="margin-top: 0.8rem;">
+            <label>
+              <span class="muted">Employee ID</span>
+              <input id="employee-id-input" class="input" placeholder="EMP001" />
+            </label>
+            <label>
+              <span class="muted">Full Name</span>
+              <input id="full-name-input" class="input" placeholder="Nathan" />
+            </label>
+            <label>
+              <span class="muted">Department</span>
+              <input id="department-input" class="input" placeholder="IT" />
+            </label>
+            <label>
+              <span class="muted">Status</span>
+              <select id="status-input" class="input">
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </label>
+          </div>
+          <div class="actions" style="margin-top: 0.8rem;">
+            <button id="add-employee-btn" class="btn" type="button">Add Employee</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Employees</h2>
+          <div class="table-wrap" style="margin-top: 0.8rem;">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Employee ID</th>
+                  <th>Full Name</th>
+                  <th>Department</th>
+                  <th>Status</th>
+                  <th>QR Token</th>
+                  <th>QR Image</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="employees-tbody"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script src="js/config.js" defer></script>
+    <script src="js/api.js" defer></script>
+    <script src="js/employee-admin.js" defer></script>
+  </body>
+</html>
