@@ -13,10 +13,15 @@
   const soundBtn = document.getElementById('sound-toggle-btn');
   const clockEl = document.getElementById('clock');
 
-  const cooldownMs = (window.APP_CONFIG && window.APP_CONFIG.LOCAL_SCAN_COOLDOWN_MS) || 4000;
-  const processingLockMs = (window.APP_CONFIG && window.APP_CONFIG.SCAN_PROCESSING_LOCK_MS) || 1200;
-  const resultResetMs = (window.APP_CONFIG && window.APP_CONFIG.SCAN_RESULT_RESET_MS) || 8000;
-  const deviceName = (window.APP_CONFIG && window.APP_CONFIG.DEVICE_NAME) || 'Front Desk Webcam';
+  const config = window.APP_CONFIG || {};
+  const cooldownMs = config.LOCAL_SCAN_COOLDOWN_MS || 2500;
+  const processingLockMs = config.SCAN_PROCESSING_LOCK_MS || 650;
+  const resultResetMs = config.SCAN_RESULT_RESET_MS || 5000;
+  const scannerFps = config.SCANNER_FPS || 18;
+  const scannerQrboxSize = config.SCANNER_QRBOX_SIZE || 240;
+  const scannerAspectRatio = config.SCANNER_ASPECT_RATIO || 1.777;
+  const scannerDisableFlip = config.SCANNER_DISABLE_FLIP !== false;
+  const deviceName = config.DEVICE_NAME || 'Front Desk Webcam';
 
   let qrScanner = null;
   let isProcessing = false;
@@ -83,7 +88,7 @@
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.start();
-    osc.stop(ctx.currentTime + 0.12);
+    osc.stop(ctx.currentTime + 0.1);
     osc.onended = () => ctx.close();
   }
 
@@ -93,7 +98,7 @@
     if (isProcessing || now < processingLockUntil) return false;
 
     if (decodedText === lastToken && now - lastTokenAt < cooldownMs) {
-      setStatus('Same QR recently scanned. Waiting for cooldown...', 'status-warn');
+      setStatus('Same QR recently scanned. Waiting for short cooldown...', 'status-warn');
       return false;
     }
 
@@ -106,8 +111,9 @@
     isProcessing = true;
     lastToken = decodedText;
     lastTokenAt = Date.now();
-    setStatus('Processing scan... Please keep the QR steady.', 'status-warn');
-    setResult({ processing: true, message: 'Submitting scan event to backend...' });
+
+    setStatus('QR detected…', 'status-ok');
+    setResult({ processing: true, message: 'Processing request...' });
 
     try {
       const data = await window.AppApi.post({
@@ -126,14 +132,14 @@
       });
 
       pingSound(true);
-      setStatus('Scan submitted successfully. Ready for next scan shortly.', 'status-ok');
+      setStatus('Scan complete. Ready shortly...', 'status-ok');
       processingLockUntil = Date.now() + processingLockMs;
       scheduleResultReset();
     } catch (error) {
       setResult({ ok: false, message: error.message || 'Could not send scan.' });
       pingSound(false);
-      setStatus('Scan failed. Please retry after checking camera and network.', 'status-error');
-      processingLockUntil = Date.now() + 700;
+      setStatus('Scan failed. Retry after checking network/camera.', 'status-error');
+      processingLockUntil = Date.now() + 550;
       scheduleResultReset();
     } finally {
       isProcessing = false;
@@ -141,7 +147,7 @@
   }
 
   function handleScanError() {
-    // Keep decode errors silent to avoid noisy status flicker while scanning.
+    // Keep decode errors silent to avoid UI jitter.
   }
 
   function chooseCamera(cameras) {
@@ -159,18 +165,12 @@
     if (!qrScanner) return;
 
     try {
-      if (isScannerRunning) {
-        await qrScanner.stop();
-      }
-    } catch (_stopError) {
-      // Safe best-effort stop.
-    }
+      if (isScannerRunning) await qrScanner.stop();
+    } catch (_stopError) {}
 
     try {
       await qrScanner.clear();
-    } catch (_clearError) {
-      // Safe best-effort clear.
-    }
+    } catch (_clearError) {}
 
     isScannerRunning = false;
   }
@@ -191,9 +191,8 @@
 
       setStatus('Checking camera availability...', 'status-warn');
       const cameras = await Html5Qrcode.getCameras();
-
       if (!cameras || !cameras.length) {
-        setStatus('No camera detected. Connect a webcam, then press Restart Scanner.', 'status-error');
+        setStatus('No camera detected. Connect a webcam and click Restart Scanner.', 'status-error');
         return;
       }
 
@@ -208,21 +207,26 @@
 
       await qrScanner.start(
         preferred.id,
-        { fps: 8, qrbox: { width: 280, height: 280 }, aspectRatio: 1.777 },
+        {
+          fps: scannerFps,
+          qrbox: { width: scannerQrboxSize, height: scannerQrboxSize },
+          aspectRatio: scannerAspectRatio,
+          disableFlip: scannerDisableFlip
+        },
         handleScan,
         handleScanError
       );
 
       isScannerRunning = true;
-      setStatus('Scanner active. Ready for QR scans.', 'status-ok');
+      setStatus(`Scanner active (${scannerFps} fps). Ready for QR scans.`, 'status-ok');
     } catch (error) {
       const message = String((error && error.message) || '').toLowerCase();
       if (message.includes('permission') || message.includes('notallowed')) {
         setStatus('Camera permission denied. Allow camera access and click Restart Scanner.', 'status-error');
       } else if (message.includes('notfound') || message.includes('overconstrained')) {
-        setStatus('Camera could not be started. Try reconnecting the webcam and restarting scanner.', 'status-error');
+        setStatus('Camera could not be started. Reconnect webcam and restart scanner.', 'status-error');
       } else {
-        setStatus('Unable to initialize scanner. Please refresh or restart scanner.', 'status-error');
+        setStatus('Unable to initialize scanner. Refresh or restart scanner.', 'status-error');
       }
       isScannerRunning = false;
     } finally {
@@ -245,9 +249,7 @@
   });
 
   window.setInterval(() => {
-    if (clockEl) {
-      clockEl.textContent = `Local Time: ${new Date().toLocaleString()}`;
-    }
+    if (clockEl) clockEl.textContent = `Local Time: ${new Date().toLocaleString()}`;
   }, 1000);
 
   resetResultToIdle();

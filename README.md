@@ -12,7 +12,7 @@ This project includes:
 
 Backend base URL used by all pages:
 
-`https://script.google.com/macros/s/AKfycbzCLkioipvpH2KhERs3TINRSBPsnUOrOjdyEasjgFBh-rGYtqECAD8vsnIu52A-r90/exec`
+`https://script.google.com/macros/s/AKfycbxvvUbLPMztKa-i7AnDTbtODDIUgAhf8xh3TWZNB4JLNRFbrTslN7t0r-fBbVNy9P8/exec`
 
 ## File structure
 
