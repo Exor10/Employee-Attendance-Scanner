@@ -14,6 +14,8 @@
   const statLate = document.getElementById('stat-late');
 
   let rows = [];
+  let isRefreshing = false;
+  let pendingRefresh = false;
   const refreshMs = (window.APP_CONFIG && window.APP_CONFIG.DASHBOARD_REFRESH_MS) || 45000;
 
   function setStatus(text, type) {
@@ -84,9 +86,17 @@
     statLate.textContent = String(late);
   }
 
-  async function loadDashboard() {
-    setStatus('Loading dashboard...', 'muted');
+  async function loadDashboard(forceStatus) {
+    if (isRefreshing) {
+      pendingRefresh = true;
+      return;
+    }
+
+    isRefreshing = true;
     refreshBtn.disabled = true;
+    if (forceStatus || !rows.length) {
+      setStatus('Loading dashboard...', 'muted');
+    }
 
     try {
       const data = await window.AppApi.get('dashboard');
@@ -95,21 +105,26 @@
 
       renderStats();
       renderTable();
-
       setStatus(rows.length ? 'Dashboard up to date.' : 'No attendance records returned for today.', 'status-ok');
-      lastRefreshEl.textContent = new Date().toLocaleTimeString();
+      lastRefreshEl.textContent = new Date().toLocaleString();
     } catch (error) {
       setStatus(error.message || 'Could not load dashboard.', 'status-error');
       if (!rows.length) {
         tbody.innerHTML = '<tr><td colspan="10">Failed to load data. Please retry.</td></tr>';
       }
     } finally {
+      isRefreshing = false;
       refreshBtn.disabled = false;
+      if (pendingRefresh) {
+        pendingRefresh = false;
+        loadDashboard(false);
+      }
     }
   }
 
   searchInput.addEventListener('input', renderTable);
-  refreshBtn.addEventListener('click', loadDashboard);
-  loadDashboard();
-  setInterval(loadDashboard, refreshMs);
+  refreshBtn.addEventListener('click', () => loadDashboard(true));
+
+  loadDashboard(true);
+  window.setInterval(() => loadDashboard(false), refreshMs);
 })(window, document);

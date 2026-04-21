@@ -122,6 +122,11 @@ h1, h2, h3 { margin: 0 0 0.5rem; line-height: 1.2; }
   border: 1px solid var(--border);
 }
 
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .input {
   width: 100%;
   border: 1px solid var(--border);

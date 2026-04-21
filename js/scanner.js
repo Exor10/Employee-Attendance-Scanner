@@ -13,27 +13,63 @@
   const soundBtn = document.getElementById('sound-toggle-btn');
   const clockEl = document.getElementById('clock');
 
+  const cooldownMs = (window.APP_CONFIG && window.APP_CONFIG.LOCAL_SCAN_COOLDOWN_MS) || 4000;
+  const processingLockMs = (window.APP_CONFIG && window.APP_CONFIG.SCAN_PROCESSING_LOCK_MS) || 1200;
+  const resultResetMs = (window.APP_CONFIG && window.APP_CONFIG.SCAN_RESULT_RESET_MS) || 8000;
+  const deviceName = (window.APP_CONFIG && window.APP_CONFIG.DEVICE_NAME) || 'Front Desk Webcam';
+
   let qrScanner = null;
   let isProcessing = false;
+  let isStarting = false;
+  let isScannerRunning = false;
+  let processingLockUntil = 0;
   let lastToken = '';
   let lastTokenAt = 0;
+  let lastCameraId = '';
   let soundOn = true;
-
-  const cooldownMs = (window.APP_CONFIG && window.APP_CONFIG.LOCAL_SCAN_COOLDOWN_MS) || 4000;
-  const deviceName = (window.APP_CONFIG && window.APP_CONFIG.DEVICE_NAME) || 'Front Desk Webcam';
+  let clearResultTimer = 0;
 
   function setStatus(message, type) {
     statusEl.textContent = message;
     statusEl.className = `status-line ${type || 'status-warn'}`;
   }
 
-  function setResult({ employee, scanType, timestamp, ok, message }) {
+  function setResult({ employee, scanType, timestamp, ok, processing, message }) {
     resultName.textContent = employee || 'Unknown';
     resultScanType.textContent = scanType || '—';
     resultTime.textContent = timestamp || new Date().toLocaleString();
     resultMessage.textContent = message || '—';
+
+    if (processing) {
+      resultStatus.textContent = 'Processing';
+      resultStatus.className = 'badge warning';
+      return;
+    }
+
     resultStatus.textContent = ok ? 'Success' : 'Error';
     resultStatus.className = `badge ${ok ? 'success' : 'danger'}`;
+  }
+
+  function resetResultToIdle() {
+    setResult({
+      employee: '—',
+      scanType: '—',
+      timestamp: '—',
+      ok: true,
+      message: 'Ready for next scan.'
+    });
+    resultStatus.textContent = 'Waiting for scan';
+    resultStatus.className = 'badge';
+  }
+
+  function scheduleResultReset() {
+    if (clearResultTimer) {
+      window.clearTimeout(clearResultTimer);
+    }
+
+    clearResultTimer = window.setTimeout(() => {
+      resetResultToIdle();
+    }, resultResetMs);
   }
 
   function pingSound(isSuccess) {
@@ -51,20 +87,27 @@
     osc.onended = () => ctx.close();
   }
 
-  async function handleScan(decodedText) {
+  function canProcessToken(decodedText) {
     const now = Date.now();
-    if (isProcessing) return;
+    if (!decodedText) return false;
+    if (isProcessing || now < processingLockUntil) return false;
 
     if (decodedText === lastToken && now - lastTokenAt < cooldownMs) {
       setStatus('Same QR recently scanned. Waiting for cooldown...', 'status-warn');
-      return;
+      return false;
     }
+
+    return true;
+  }
+
+  async function handleScan(decodedText) {
+    if (!canProcessToken(decodedText)) return;
 
     isProcessing = true;
     lastToken = decodedText;
-    lastTokenAt = now;
-
-    setStatus('QR detected. Sending attendance event...', 'status-warn');
+    lastTokenAt = Date.now();
+    setStatus('Processing scan... Please keep the QR steady.', 'status-warn');
+    setResult({ processing: true, message: 'Submitting scan event to backend...' });
 
     try {
       const data = await window.AppApi.post({
@@ -73,72 +116,126 @@
         device: deviceName
       });
 
-      const ok = !!(data && (data.success || data.status === 'success'));
       const payload = data && (data.data || data.record || data.result || {});
       setResult({
         employee: payload.full_name || payload.employee_name || payload.employee || payload.employee_id,
         scanType: payload.scan_type || payload.step || data.scan_type,
         timestamp: payload.timestamp || payload.datetime || new Date().toLocaleString(),
-        ok,
-        message: data.message || (ok ? 'Scan accepted.' : 'Scan failed.')
+        ok: true,
+        message: data.message || 'Scan accepted.'
       });
 
-      pingSound(ok);
-      setStatus(ok ? 'Ready for next scan.' : 'Backend returned an error.', ok ? 'status-ok' : 'status-error');
+      pingSound(true);
+      setStatus('Scan submitted successfully. Ready for next scan shortly.', 'status-ok');
+      processingLockUntil = Date.now() + processingLockMs;
+      scheduleResultReset();
     } catch (error) {
       setResult({ ok: false, message: error.message || 'Could not send scan.' });
       pingSound(false);
-      setStatus('Failed to submit scan. Please retry.', 'status-error');
+      setStatus('Scan failed. Please retry after checking camera and network.', 'status-error');
+      processingLockUntil = Date.now() + 700;
+      scheduleResultReset();
     } finally {
       isProcessing = false;
     }
   }
 
   function handleScanError() {
-    // Intentionally quiet to avoid noisy UI updates on each decode attempt.
+    // Keep decode errors silent to avoid noisy status flicker while scanning.
+  }
+
+  function chooseCamera(cameras) {
+    if (!Array.isArray(cameras) || !cameras.length) return null;
+
+    const byMatch = cameras.find((camera) => {
+      const label = String(camera.label || '').toLowerCase();
+      return label.includes('back') || label.includes('rear') || label.includes('environment');
+    });
+
+    return byMatch || cameras[0];
+  }
+
+  async function stopScannerSafe() {
+    if (!qrScanner) return;
+
+    try {
+      if (isScannerRunning) {
+        await qrScanner.stop();
+      }
+    } catch (_stopError) {
+      // Safe best-effort stop.
+    }
+
+    try {
+      await qrScanner.clear();
+    } catch (_clearError) {
+      // Safe best-effort clear.
+    }
+
+    isScannerRunning = false;
   }
 
   async function startScanner() {
-    if (!window.Html5Qrcode) {
-      setStatus('Scanner library failed to load. Please refresh.', 'status-error');
-      return;
-    }
-
-    if (qrScanner) {
-      try { await qrScanner.stop(); } catch (_e) {}
-      try { await qrScanner.clear(); } catch (_e) {}
-    }
-
-    qrScanner = new Html5Qrcode('reader');
-    setStatus('Requesting camera permission...', 'status-warn');
+    if (isStarting) return;
+    isStarting = true;
+    restartBtn.disabled = true;
 
     try {
-      const devices = await Html5Qrcode.getCameras();
-      if (!devices || !devices.length) {
-        setStatus('No camera found. Connect a webcam and try again.', 'status-error');
+      if (!window.Html5Qrcode) {
+        setStatus('Scanner library failed to load. Refresh this page and try again.', 'status-error');
         return;
       }
 
+      await stopScannerSafe();
+      qrScanner = new Html5Qrcode('reader');
+
+      setStatus('Checking camera availability...', 'status-warn');
+      const cameras = await Html5Qrcode.getCameras();
+
+      if (!cameras || !cameras.length) {
+        setStatus('No camera detected. Connect a webcam, then press Restart Scanner.', 'status-error');
+        return;
+      }
+
+      const preferred = cameras.find((camera) => camera.id === lastCameraId) || chooseCamera(cameras);
+      if (!preferred) {
+        setStatus('Unable to choose a camera. Please restart scanner.', 'status-error');
+        return;
+      }
+
+      lastCameraId = preferred.id;
+      setStatus(`Starting camera: ${preferred.label || 'Default Camera'}...`, 'status-warn');
+
       await qrScanner.start(
-        { facingMode: 'environment' },
-        { fps: 8, qrbox: { width: 280, height: 280 } },
+        preferred.id,
+        { fps: 8, qrbox: { width: 280, height: 280 }, aspectRatio: 1.777 },
         handleScan,
         handleScanError
       );
 
+      isScannerRunning = true;
       setStatus('Scanner active. Ready for QR scans.', 'status-ok');
     } catch (error) {
-      const message = (error && error.message) || '';
-      if (message.toLowerCase().includes('permission')) {
-        setStatus('Camera permission denied. Please allow access and restart.', 'status-error');
+      const message = String((error && error.message) || '').toLowerCase();
+      if (message.includes('permission') || message.includes('notallowed')) {
+        setStatus('Camera permission denied. Allow camera access and click Restart Scanner.', 'status-error');
+      } else if (message.includes('notfound') || message.includes('overconstrained')) {
+        setStatus('Camera could not be started. Try reconnecting the webcam and restarting scanner.', 'status-error');
       } else {
-        setStatus('Unable to start scanner. Check camera connection.', 'status-error');
+        setStatus('Unable to initialize scanner. Please refresh or restart scanner.', 'status-error');
       }
+      isScannerRunning = false;
+    } finally {
+      isStarting = false;
+      restartBtn.disabled = false;
     }
   }
 
   restartBtn.addEventListener('click', () => {
-    startScanner();
+    if (!isStarting) {
+      setStatus('Restarting scanner...', 'status-warn');
+      startScanner();
+    }
   });
 
   soundBtn.addEventListener('click', () => {
@@ -147,9 +244,12 @@
     soundBtn.setAttribute('aria-pressed', String(soundOn));
   });
 
-  setInterval(() => {
-    if (clockEl) clockEl.textContent = `Local Time: ${new Date().toLocaleString()}`;
+  window.setInterval(() => {
+    if (clockEl) {
+      clockEl.textContent = `Local Time: ${new Date().toLocaleString()}`;
+    }
   }, 1000);
 
+  resetResultToIdle();
   startScanner();
 })(window, document);

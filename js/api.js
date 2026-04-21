@@ -3,13 +3,20 @@
 
   const BASE_URL = window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL;
 
-  async function parseJsonSafe(response) {
+  async function parseBodySafe(response) {
     const text = await response.text();
+    if (!text) return { data: {}, rawText: '' };
+
     try {
-      return text ? JSON.parse(text) : {};
+      return { data: JSON.parse(text), rawText: text };
     } catch (_error) {
-      throw new Error('The server returned an unreadable response.');
+      return { data: null, rawText: text };
     }
+  }
+
+  function backendMessage(payload) {
+    if (!payload || typeof payload !== 'object') return '';
+    return payload.message || payload.error || payload.reason || '';
   }
 
   async function request(pathParams, options) {
@@ -28,14 +35,27 @@
     try {
       response = await fetch(url.toString(), options);
     } catch (_networkError) {
-      throw new Error('Network request failed. Check your internet or backend availability.');
+      throw new Error('Network request failed. Check your internet connection and backend availability.');
     }
 
-    const data = await parseJsonSafe(response);
+    const parsed = await parseBodySafe(response);
+    const data = parsed.data;
 
     if (!response.ok) {
-      const message = (data && (data.message || data.error)) || 'Request failed.';
-      throw new Error(message);
+      throw new Error(
+        backendMessage(data) ||
+          (parsed.rawText ? `Backend request failed (${response.status}). ${parsed.rawText}` : `Backend request failed (${response.status}).`)
+      );
+    }
+
+    if (data === null) {
+      throw new Error('The server returned an unexpected response format. Please try again.');
+    }
+
+    const successFlag = data && data.success;
+    const statusFlag = String((data && data.status) || '').toLowerCase();
+    if (successFlag === false || statusFlag === 'error' || statusFlag === 'failed') {
+      throw new Error(backendMessage(data) || 'The server rejected the request.');
     }
 
     return data;
@@ -51,7 +71,7 @@
       {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'text/plain;charset=utf-8'
         },
         body: JSON.stringify(payload || {})
       }
