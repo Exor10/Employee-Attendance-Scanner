@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scanner | QR Attendance System</title>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container topbar-inner">
+        <a class="brand" href="index.html">QR Attendance System</a>
+        <nav class="nav" aria-label="Main navigation">
+          <a class="nav-link" href="index.html">Home</a>
+          <a class="nav-link active" href="scanner.html">Scanner</a>
+          <a class="nav-link" href="dashboard.html">Dashboard</a>
+          <a class="nav-link" href="reports.html">Reports</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="page">
+      <div class="container grid grid-2">
+        <section class="card" id="scanner-region">
+          <h1>Webcam QR Scanner</h1>
+          <p class="muted">Place the employee QR card inside the frame. Keep card steady for quick detection.</p>
+          <p id="clock" class="status-line" aria-live="polite"></p>
+          <div id="reader" aria-label="Camera feed"></div>
+          <p id="scanner-status" class="status-line status-warn" aria-live="polite">Initializing scanner...</p>
+
+          <div class="actions" style="margin-top: 0.8rem;">
+            <button class="btn secondary" id="restart-btn" type="button">Restart Scanner</button>
+            <button class="btn secondary" id="sound-toggle-btn" type="button" aria-pressed="true">Sound: On</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Latest Scan Result</h2>
+          <p class="muted">Shows the most recent scan response.</p>
+          <div id="scan-result" class="grid" style="gap: 0.4rem; margin-top: 0.8rem;">
+            <div><strong>Employee:</strong> <span id="result-name">—</span></div>
+            <div><strong>Scan Type:</strong> <span id="result-scan-type">—</span></div>
+            <div><strong>Timestamp:</strong> <span id="result-time">—</span></div>
+            <div><strong>Status:</strong> <span id="result-status" class="badge">Waiting for scan</span></div>
+            <div><strong>Message:</strong> <span id="result-message">No scans yet.</span></div>
+          </div>
+          <p class="footer-note">Local cooldown is active to reduce duplicate submissions from cards held in frame.</p>
+        </section>
+      </div>
+    </main>
+
+    <script src="https://unpkg.com/html5-qrcode" defer></script>
+    <script src="js/config.js" defer></script>
+    <script src="js/api.js" defer></script>
+    <script src="js/scanner.js" defer></script>
+  </body>
+</html>
