@@ -87,7 +87,7 @@
 
     try {
       const data = await window.AppApi.get('employeeSummary', { employee_id: employeeId });
-      const summary = data && (data.summary || data.data || {});
+      const summary = data || {};
       const rows = data && (data.history || data.records || []);
 
       renderSummary(summary);
