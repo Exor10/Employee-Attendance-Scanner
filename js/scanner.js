@@ -12,6 +12,9 @@
   const restartBtn = document.getElementById('restart-btn');
   const soundBtn = document.getElementById('sound-toggle-btn');
   const clockEl = document.getElementById('clock');
+  const flashOverlay = document.getElementById('scan-flash-overlay');
+
+  let flashTimer = 0;
 
   const config = window.APP_CONFIG || {};
   const cooldownMs = config.LOCAL_SCAN_COOLDOWN_MS || 2500;
@@ -92,6 +95,28 @@
     osc.onended = () => ctx.close();
   }
 
+
+  function triggerScanFlash(type) {
+    if (!flashOverlay) return;
+
+    const flashClass = type === 'success' ? 'flash-success' : 'flash-error';
+    flashOverlay.classList.remove('flash-success', 'flash-error');
+
+    if (flashTimer) {
+      window.clearTimeout(flashTimer);
+      flashTimer = 0;
+    }
+
+    flashOverlay.classList.add(flashClass);
+    flashOverlay.classList.remove('flash-active');
+    void flashOverlay.offsetWidth;
+    flashOverlay.classList.add('flash-active');
+
+    flashTimer = window.setTimeout(() => {
+      flashOverlay.classList.remove('flash-active');
+    }, 250);
+  }
+
   function canProcessToken(decodedText) {
     const now = Date.now();
     if (!decodedText) return false;
@@ -132,12 +157,14 @@
       });
 
       pingSound(true);
+      triggerScanFlash('success');
       setStatus('Scan complete. Ready shortly...', 'status-ok');
       processingLockUntil = Date.now() + processingLockMs;
       scheduleResultReset();
     } catch (error) {
       setResult({ ok: false, message: error.message || 'Could not send scan.' });
       pingSound(false);
+      triggerScanFlash('error');
       setStatus('Scan failed. Retry after checking network/camera.', 'status-error');
       processingLockUntil = Date.now() + 550;
       scheduleResultReset();

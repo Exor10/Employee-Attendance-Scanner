@@ -218,3 +218,25 @@ h1, h2, h3 { margin: 0 0 0.5rem; line-height: 1.2; }
     grid-column: 1 / -1;
   }
 }
+
+
+#scan-flash-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 9999;
+}
+
+#scan-flash-overlay.flash-success {
+  background: rgba(11, 132, 87, 0.24);
+}
+
+#scan-flash-overlay.flash-error {
+  background: rgba(180, 35, 24, 0.24);
+}
+
+#scan-flash-overlay.flash-active {
+  opacity: 1;
+}
