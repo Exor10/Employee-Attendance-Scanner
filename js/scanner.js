@@ -114,7 +114,7 @@
 
     flashTimer = window.setTimeout(() => {
       flashOverlay.classList.remove('flash-active');
-    }, 250);
+    }, 400);
   }
 
   function canProcessToken(decodedText) {
