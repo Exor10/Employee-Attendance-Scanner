@@ -193,3 +193,50 @@ h1, h2, h3 { margin: 0 0 0.5rem; line-height: 1.2; }
   .card, .table-wrap { border-color: #ccc; box-shadow: none; }
   .page { padding: 0; }
 }
+
+.reports-layout .date-range-card {
+  border-style: dashed;
+  border-width: 1px;
+}
+
+.date-range-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  align-items: end;
+}
+
+.date-range-actions label {
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .date-range-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .date-range-actions .btn {
+    grid-column: 1 / -1;
+  }
+}
+
+
+#scan-flash-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 9999;
+}
+
+#scan-flash-overlay.flash-success {
+  background: rgba(11, 132, 87, 0.24);
+}
+
+#scan-flash-overlay.flash-error {
+  background: rgba(180, 35, 24, 0.24);
+}
+
+#scan-flash-overlay.flash-active {
+  opacity: 1;
+}
