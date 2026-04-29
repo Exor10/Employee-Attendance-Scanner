@@ -147,14 +147,22 @@
         device: deviceName
       });
 
-      const payload = data && (data.data || data.record || data.result || {});
-      setResult({
-        employee: payload.full_name || payload.employee_name || payload.employee || payload.employee_id,
-        scanType: payload.scan_type || payload.step || data.scan_type,
-        timestamp: payload.timestamp || payload.datetime || new Date().toLocaleString(),
-        ok: true,
-        message: data.message || 'Scan accepted.'
-      });
+      const payload = data?.data || data?.record || data?.result || {};
+
+const displayTimestamp =
+  payload.timestamp ||
+  data?.timestamp ||
+  payload.datetime ||
+  payload.date_time ||
+  new Date().toLocaleString();
+
+setResult({
+  employee: payload.full_name || payload.employee_name || payload.employee || payload.employee_id || 'Employee',
+  scanType: payload.scan_type || payload.step || data?.scan_type || 'SCAN',
+  timestamp: displayTimestamp,
+  ok: true,
+  message: data.message || 'Scan accepted.'
+});
 
       pingSound(true);
       triggerScanFlash('success');
