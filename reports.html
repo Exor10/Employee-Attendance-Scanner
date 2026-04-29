@@ -20,7 +20,7 @@
     </header>
 
     <main class="page">
-      <div class="container grid" style="gap: 1rem;">
+      <div class="container grid reports-layout" style="gap: 1rem;">
         <section class="card no-print">
           <h1>Employee Reports</h1>
           <div class="actions">
@@ -33,6 +33,22 @@
             <button class="btn secondary" id="print-btn" type="button">Print</button>
           </div>
           <p id="reports-status" class="status-line muted" aria-live="polite">Enter an employee ID to begin.</p>
+        </section>
+
+        <section class="card no-print date-range-card" aria-labelledby="date-range-title">
+          <h2 id="date-range-title">Date Range Report</h2>
+          <div class="actions date-range-actions">
+            <label>
+              <span class="muted">Start Date</span>
+              <input class="input" id="start-date-input" type="date" />
+            </label>
+            <label>
+              <span class="muted">End Date</span>
+              <input class="input" id="end-date-input" type="date" />
+            </label>
+            <button class="btn" id="date-range-export-btn" type="button">Export CSV</button>
+          </div>
+          <p id="date-range-status" class="status-line muted" aria-live="polite">Choose a date range, then export attendance records.</p>
         </section>
 
         <section class="grid grid-3" id="summary-cards">
