@@ -10,9 +10,9 @@ This project includes:
 - **Reports page** for per-employee summaries with CSV export and print support
 - Shared, reusable **API utility** and **configuration** layer
 
-Backend base URL used by all pages:
+Backend base is by using Google Apps Script
 
-`https://script.google.com/macros/s/AKfycbxvvUbLPMztKa-i7AnDTbtODDIUgAhf8xh3TWZNB4JLNRFbrTslN7t0r-fBbVNy9P8/exec`
+
 
 ## File structure
 
