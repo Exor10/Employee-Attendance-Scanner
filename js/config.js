@@ -3,7 +3,7 @@
 
   window.APP_CONFIG = {
     API_BASE_URL:
-      'https://script.google.com/macros/s/AKfycbxvvUbLPMztKa-i7AnDTbtODDIUgAhf8xh3TWZNB4JLNRFbrTslN7t0r-fBbVNy9P8/exec',
+      'https://script.google.com/macros/s/AKfycbx1odHX6xTZJ8VPRSie42ilYucjeZUsv1sg-tFPft-hAq4r2CJCut6seCUtOywpi8I/exec',
     DEVICE_NAME: 'Front Desk Webcam',
     LOCAL_SCAN_COOLDOWN_MS: 2500,
     SCAN_PROCESSING_LOCK_MS: 650,
