@@ -80,20 +80,28 @@
     }, resultResetMs);
   }
 
-  function pingSound(isSuccess) {
-    if (!soundOn || !window.AudioContext) return;
-    const ctx = new AudioContext();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = isSuccess ? 900 : 320;
-    gain.gain.value = 0.03;
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.1);
-    osc.onended = () => ctx.close();
-  }
+function pingSound(isSuccess) {
+  if (!soundOn || !window.AudioContext) return;
+
+  const ctx = new AudioContext();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.type = 'square'; // louder/sharper than sine
+  osc.frequency.value = isSuccess ? 1000 : 300;
+
+  // Speaker-friendly volume
+  gain.gain.setValueAtTime(0.18, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start();
+  osc.stop(ctx.currentTime + 0.22);
+
+  osc.onended = () => ctx.close();
+}
 
 
   function triggerScanFlash(type) {
