@@ -1,4 +1,3 @@
-requireAdminAuth();
 (function (window, document) {
   'use strict';
 
