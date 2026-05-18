@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login | QR Attendance System</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <main class="page">
+    <div class="container" style="max-width: 420px; margin: 5rem auto;">
+      <section class="card">
+        <h1>Admin Login</h1>
+        <p class="muted">This area is restricted to authorized administrators.</p>
+
+        <div style="margin-top: 1.2rem;">
+          <label>
+            <span class="muted">Password</span>
+            <input id="password-input" class="input" type="password"
+              placeholder="Enter admin password" autocomplete="current-password" />
+          </label>
+        </div>
+
+        <div class="actions" style="margin-top: 1rem;">
+          <button id="login-btn" class="btn" type="button">Login</button>
+        </div>
+
+        <p id="login-status" class="muted" style="margin-top: 0.8rem; min-height: 1.2em;"></p>
+      </section>
+    </div>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script>
+    const loginBtn = document.getElementById('login-btn');
+    const statusEl = document.getElementById('login-status');
+
+    // If already logged in, skip straight to admin
+    if (sessionStorage.getItem('admin_token')) {
+      window.location.href = 'employee-admin.html';
+    }
+
+    loginBtn.addEventListener('click', async () => {
+      const password = document.getElementById('password-input').value;
+      if (!password) {
+        statusEl.textContent = 'Please enter a password.';
+        return;
+      }
+
+      loginBtn.disabled = true;
+      statusEl.textContent = 'Verifying...';
+
+      try {
+        const res = await fetch(CONFIG.API_BASE_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'adminLogin', password: password })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          sessionStorage.setItem('admin_token', data.token);
+          window.location.href = 'employee-admin.html';
+        } else {
+          statusEl.style.color = 'red';
+          statusEl.textContent = data.message || 'Login failed.';
+          loginBtn.disabled = false;
+        }
+      } catch (err) {
+        statusEl.style.color = 'red';
+        statusEl.textContent = 'Connection error. Check your network.';
+        loginBtn.disabled = false;
+      }
+    });
+
+    // Allow Enter key to submit
+    document.getElementById('password-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') loginBtn.click();
+    });
+  </script>
+</body>
+</html>
