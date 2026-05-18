@@ -35,9 +35,12 @@
     const loginBtn = document.getElementById('login-btn');
     const statusEl = document.getElementById('login-status');
 
-    // If already logged in, skip straight to admin
+    const _params = new URLSearchParams(window.location.search);
+    const _redirect = _params.get('redirect') || 'dashboard.html';
+
+    // If already logged in, skip straight to the intended page
     if (sessionStorage.getItem('admin_token')) {
-      window.location.href = 'employee-admin.html';
+      window.location.href = _redirect;
     }
 
     loginBtn.addEventListener('click', async () => {
@@ -60,7 +63,7 @@
 
         if (data.success) {
           sessionStorage.setItem('admin_token', data.token);
-          window.location.href = 'employee-admin.html';
+          window.location.href = _redirect;
         } else {
           statusEl.style.color = 'red';
           statusEl.textContent = data.message || 'Login failed.';
