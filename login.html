@@ -54,9 +54,9 @@
       statusEl.textContent = 'Verifying...';
 
       try {
-        const res = await fetch(CONFIG.API_BASE_URL, {
+        const res = await fetch(APP_CONFIG.API_BASE_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ action: 'adminLogin', password: password })
         });
         const data = await res.json();
